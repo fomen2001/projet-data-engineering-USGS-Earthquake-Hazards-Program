@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any, Iterable, Tuple
 from sqlalchemy import create_engine, text
 from src.utils import utc_now
+import json
 
 def iter_features(payload: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
     """Yield GeoJSON features from a USGS FeatureCollection payload."""
@@ -37,9 +38,12 @@ def upsert_raw(engine_url: str, payload: Dict[str, Any]) -> int:
     """)
 
     with engine.begin() as conn:
-        conn.execute(sql, [
-            {"event_id": r[0], "fetched_at": r[1], "payload": str(r[2]).replace("'", '"')}
-            for r in rows
-        ])
+        conn.execute(
+            sql,
+            [
+                {"event_id": r[0], "fetched_at": r[1], "payload": json.dumps(r[2])}
+                for r in rows
+            ],
+        )
 
     return len(rows)
